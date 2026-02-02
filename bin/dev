@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -e
+
+# Check if foreman is available, otherwise run manually
+if command -v foreman &> /dev/null; then
+  foreman start -f Procfile.dev
+else
+  echo "Starting Rails API on port 4000..."
+  bin/rails server -p 4000 &
+  RAILS_PID=$!
+
+  echo "Starting Vite dev server on port 5173..."
+  cd client && npm run dev &
+  VITE_PID=$!
+
+  trap "kill $RAILS_PID $VITE_PID 2>/dev/null" EXIT
+
+  echo ""
+  echo "Service Management running:"
+  echo "  API:      http://localhost:4000"
+  echo "  Frontend: http://localhost:5173"
+  echo ""
+
+  wait
+fi

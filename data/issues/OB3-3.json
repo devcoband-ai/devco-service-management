@@ -1,0 +1,21 @@
+{
+  "tracking_id": "OB3-3",
+  "project": "OB3",
+  "type": "decision",
+  "title": "Composite Credential vs Vanity Badge",
+  "description": "Decision needed: should we pursue composite credentials (bundling multiple verifications into one badge) or vanity badges (simple achievement/membership badges)? Composite is more technically interesting but vanity badges have clearer market demand.",
+  "status": "backlog",
+  "priority": "medium",
+  "assignee": null,
+  "reporter": null,
+  "labels": ["decision", "ob3", "strategy"],
+  "story_points": null,
+  "sprint": null,
+  "due_date": null,
+  "links": [
+    {"type": "relates_to", "ref": "OB3-1"}
+  ],
+  "comments": [],
+  "created_at": "2026-02-01T11:10:00-05:00",
+  "updated_at": "2026-02-01T11:10:00-05:00"
+}

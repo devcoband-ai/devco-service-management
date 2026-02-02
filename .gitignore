@@ -1,0 +1,28 @@
+# Rails
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+/storage/*
+!/storage/.keep
+.byebug_history
+/config/master.key
+/config/credentials/*.key
+
+# Node / Vite
+client/node_modules/
+client/dist/
+client/.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data dir is source of truth — tracked in git
+# data/

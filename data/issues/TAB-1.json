@@ -1,0 +1,25 @@
+{
+  "tracking_id": "TAB-1",
+  "project": "TAB",
+  "type": "task",
+  "title": "Build Texas Arlington Bot",
+  "description": "Bot that scans Tarrant County public records for property data, tax lien opportunities, and ownership changes. Should automate the manual process of checking county clerk records.",
+  "status": "backlog",
+  "priority": "medium",
+  "assignee": null,
+  "reporter": null,
+  "labels": ["bot", "county-scan"],
+  "story_points": null,
+  "sprint": null,
+  "due_date": null,
+  "links": [],
+  "comments": [
+    {
+      "author": null,
+      "body": "Parked for now — need to research Tarrant County's public records API first",
+      "at": "2026-02-01T10:52:00-05:00"
+    }
+  ],
+  "created_at": "2026-02-01T10:52:00-05:00",
+  "updated_at": "2026-02-01T10:52:00-05:00"
+}

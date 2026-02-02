@@ -1,0 +1,22 @@
+{
+  "tracking_id": "OB3-1",
+  "project": "OB3",
+  "type": "epic",
+  "title": "Open Badge 3.0 POC + IDX Position",
+  "description": "Build a proof of concept for Open Badge 3.0 verifiable credentials. Position IDX as a credential issuer/verifier in the ecosystem. Explore how OB3 fits with Trua's identity verification.",
+  "status": "backlog",
+  "priority": "medium",
+  "assignee": null,
+  "reporter": null,
+  "labels": ["credentials", "ob3", "poc"],
+  "story_points": null,
+  "sprint": null,
+  "due_date": null,
+  "links": [
+    {"type": "parent", "ref": "OB3-2"},
+    {"type": "relates_to", "ref": "OB3-3"}
+  ],
+  "comments": [],
+  "created_at": "2026-02-01T11:00:00-05:00",
+  "updated_at": "2026-02-01T11:00:00-05:00"
+}
