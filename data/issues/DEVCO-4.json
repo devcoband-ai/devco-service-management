@@ -1,0 +1,23 @@
+{
+  "tracking_id": "DEVCO-4",
+  "project": "DEVCO",
+  "type": "story",
+  "title": "Operationalize LLM Registry",
+  "description": "LLM Registry built and feature-flagged off. Needs real API keys configured, test connections validated, capability assignments tuned, and flag turned on.",
+  "status": "backlog",
+  "priority": "low",
+  "assignee": null,
+  "reporter": "jeff@devco",
+  "labels": [
+    "llm",
+    "registry",
+    "feature-flag"
+  ],
+  "story_points": null,
+  "sprint": null,
+  "due_date": null,
+  "links": [],
+  "comments": [],
+  "created_at": "2026-02-02T10:21:21Z",
+  "updated_at": "2026-02-02T14:23:49Z"
+}

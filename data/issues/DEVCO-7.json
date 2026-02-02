@@ -1,0 +1,35 @@
+{
+  "tracking_id": "DEVCO-7",
+  "project": "DEVCO",
+  "type": "story",
+  "title": "Library document management UI — browse, preview, download, share",
+  "description": "Upgrade the Library from a catalog view to a full document management interface. Browse work products with search/filter, click to preview rendered content in-browser (markdown→styled HTML), download individual or bulk, share via links. The export system (DEVCO-6) provides the backend — this is the human-facing UI.",
+  "status": "in_review",
+  "priority": "high",
+  "assignee": null,
+  "reporter": "jeff@devco",
+  "labels": [
+    "library",
+    "ui",
+    "preview",
+    "download"
+  ],
+  "story_points": null,
+  "sprint": null,
+  "due_date": null,
+  "links": [],
+  "comments": [
+    {
+      "author": "jeff@devco",
+      "body": "Built and deployed. Full doc management UI: search/filter/sort, rendered markdown preview with syntax highlighting, download (md/html/text + bulk ZIP), share links with expiry/password/max-downloads, quick preview modal, prev/next navigation. Same treatment for Writers Room articles. 10 files, 1039 lines. Committed and pushed.",
+      "at": "2026-02-02T13:55:35Z"
+    },
+    {
+      "author": "devco@devco",
+      "body": "[Devco] Built and deployed. Full doc management UI at **localhost:3333/library**: search/filter/sort, rendered markdown preview with syntax highlighting, download (md/html/text + bulk ZIP), share links with expiry/password/max-downloads, quick preview modal, prev/next navigation. Same treatment for Writers Room articles at **localhost:3333/articles**.",
+      "at": "2026-02-02T14:18:52Z"
+    }
+  ],
+  "created_at": "2026-02-02T13:48:12Z",
+  "updated_at": "2026-02-02T14:18:52Z"
+}

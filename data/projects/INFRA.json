@@ -1,0 +1,9 @@
+{
+  "key": "INFRA",
+  "name": "Infrastructure & Ops",
+  "description": "Gmail, deployment pipelines, credentials, DevOps concerns",
+  "lead": "jeff@devco",
+  "status": "active",
+  "created_at": "2026-02-02T10:21:04Z",
+  "updated_at": "2026-02-02T10:21:04Z"
+}

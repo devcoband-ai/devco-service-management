@@ -1,0 +1,44 @@
+{
+  "tracking_id": "INFRA-1",
+  "project": "INFRA",
+  "type": "bug",
+  "title": "Gmail OAuth token instability",
+  "description": "## Problem\nGmail OAuth token keeps dying. gog CLI hangs on every call. Token is dead in macOS keyring (keyring dir empty).\n\n## Root Cause\nTwo compounding issues:\n1. **MFA enabled recently** on devcoband@gmail.com — Google revoked all existing OAuth refresh tokens when 2-Step Verification was turned on\n2. **OAuth app in testing mode** (\"Devco Journal\" in Google Cloud Console) — testing mode tokens expire after 7 days regardless\n\n## Recommendation: Push OAuth app to production (Option 1)\nGoogle Cloud Console → APIs & Services → OAuth consent screen → Publish App\n\n**What \"production\" means:**\n- Refresh tokens become long-lived (months, until password change or manual revoke)\n- Does NOT make anything public\n- Does NOT require Google review (only needed if other users would auth — we are the only user)\n- Does NOT expose data or endpoints\n- No cost\n- Just flips the token expiry policy\n\n**What it does NOT mean:**\n- No app store listing\n- No review process (since only owner uses it)\n- No security exposure\n\n## Action Steps (Jeff — requires browser)\n1. Go to console.cloud.google.com → APIs & Services → OAuth consent screen\n2. Click \"Publish App\" → confirm\n3. Re-auth: `~/.local/bin/gog auth add devcoband@gmail.com --services gmail --force`\n4. Verify: `~/.local/bin/gog gmail search \"is:unread\" --account devcoband@gmail.com --limit 1`\n\n## Alternatives Considered\n- **Option 2: Service account** — requires Google Workspace with domain-wide delegation. devcoband@gmail.com is regular Gmail, not Workspace. Won't work.\n- **Option 3: Accept weekly re-auth** — livable but annoying, breaks cron monitoring overnight",
+  "status": "done",
+  "priority": "high",
+  "assignee": null,
+  "reporter": "jeff@devco",
+  "labels": [
+    "gmail",
+    "oauth",
+    "reliability"
+  ],
+  "story_points": null,
+  "sprint": null,
+  "due_date": null,
+  "links": [],
+  "comments": [
+    {
+      "author": "jeff@devco",
+      "body": "Investigated 2/2 5:25am. gog CLI hangs on every call — token is dead in macOS keyring. Keyring dir is empty. Needs interactive re-auth: `~/.local/bin/gog auth login --account devcoband@gmail.com --force` (requires browser). Root cause likely: OAuth app in testing mode = tokens expire after 7 days. Fix options: (1) move app to production in Google Cloud Console, (2) use a service account instead, (3) accept re-auth every week. Recommend option 1.",
+      "at": "2026-02-02T10:26:40Z"
+    },
+    {
+      "author": "jeff@devco",
+      "body": "Action plan: (1) Google Cloud Console → OAuth consent screen → Publish App (no review needed, just flips token policy). (2) Re-auth: gog auth add devcoband@gmail.com --services gmail --force. MFA caused token revocation + testing mode = 7-day expiry. Publishing fixes the expiry.",
+      "at": "2026-02-02T10:39:01Z"
+    },
+    {
+      "author": "jeff@devco",
+      "body": "BLOCKED: All gog usage suspended until OAuth fix is applied. No cron checks, no email reads. Agent will not attempt gog calls until this ticket is done.",
+      "at": "2026-02-02T12:18:39Z"
+    },
+    {
+      "author": "jeff@devco",
+      "body": "Closing as won't fix. Decision: drop gog dependency entirely rather than fix OAuth. Platform replaces the need for Gmail-based workflows. See DEVCO-6 for replacement features.",
+      "at": "2026-02-02T12:25:15Z"
+    }
+  ],
+  "created_at": "2026-02-02T10:21:21Z",
+  "updated_at": "2026-02-02T12:25:15Z"
+}

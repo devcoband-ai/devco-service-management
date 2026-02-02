@@ -1,0 +1,23 @@
+{
+  "tracking_id": "DEVCO-2",
+  "project": "DEVCO",
+  "type": "epic",
+  "title": "Deploy DevCo Platform to Render",
+  "description": "Platform is localhost-only. Need CI/CD pipeline from GitHub to Render — per-project apps + Postgres. Includes branch protection, secrets management.",
+  "status": "backlog",
+  "priority": "medium",
+  "assignee": null,
+  "reporter": "jeff@devco",
+  "labels": [
+    "deployment",
+    "render",
+    "ci-cd"
+  ],
+  "story_points": null,
+  "sprint": null,
+  "due_date": null,
+  "links": [],
+  "comments": [],
+  "created_at": "2026-02-02T10:21:21Z",
+  "updated_at": "2026-02-02T14:23:36Z"
+}

@@ -5,6 +5,9 @@ Rails.application.routes.draw do
       resources :projects, param: :key, only: [:index, :create, :show, :update, :destroy] do
         resources :issues, only: [:index, :create]
         get :board, to: "boards#by_project"
+        member do
+          post :archive, to: "projects#archive"
+        end
       end
 
       # Issues (direct access by tracking_id)
@@ -12,8 +15,14 @@ Rails.application.routes.draw do
         member do
           post :transitions, to: "transitions#create"
           post :comments, to: "comments#create"
+          post :recover, to: "issues#recover"
         end
       end
+
+      # Bulk operations
+      post "issues/bulk_archive", to: "issues#bulk_archive"
+      post "issues/bulk_delete", to: "issues#bulk_delete"
+      post "issues/bulk_recover", to: "issues#bulk_recover"
 
       # Boards
       resources :boards, only: [:show, :update]

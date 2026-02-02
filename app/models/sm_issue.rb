@@ -2,7 +2,7 @@ class SmIssue < ApplicationRecord
   self.table_name = "sm_issues"
 
   TYPES = %w[epic story task bug spike decision].freeze
-  STATUSES = %w[backlog todo in_progress in_review done cancelled].freeze
+  STATUSES = %w[backlog todo in_progress in_review done cancelled archived deleted].freeze
   PRIORITIES = %w[critical high medium low].freeze
 
   belongs_to :project, class_name: "SmProject"
@@ -21,9 +21,20 @@ class SmIssue < ApplicationRecord
 
   scope :by_status, ->(status) { where(status: status) }
   scope :by_project, ->(project_key) { joins(:project).where(sm_projects: { key: project_key }) }
+  scope :active, -> { where(status: STATUSES - %w[archived deleted]) }
+  scope :not_deleted, -> { where.not(status: "deleted") }
+  scope :archived_only, -> { where(status: "archived") }
+  scope :deleted_only, -> { where(status: "deleted") }
 
   def file_path_on_disk
-    Rails.root.join("data", "issues", "#{tracking_id}.json").to_s
+    case status
+    when "archived"
+      Rails.root.join("data", "archive", "issues", "#{tracking_id}.json").to_s
+    when "deleted"
+      Rails.root.join("data", "deleted", "issues", "#{tracking_id}.json").to_s
+    else
+      Rails.root.join("data", "issues", "#{tracking_id}.json").to_s
+    end
   end
 
   def all_links

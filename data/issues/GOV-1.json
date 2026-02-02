@@ -1,0 +1,29 @@
+{
+  "tracking_id": "GOV-1",
+  "project": "GOV",
+  "type": "story",
+  "title": "jhighman GitHub profile overhaul",
+  "description": "After repo privatization: bio, pinned repos, README, social presence. Then use as template for Jack professional presence buildout.",
+  "status": "done",
+  "priority": "medium",
+  "assignee": null,
+  "reporter": "jeff@devco",
+  "labels": [
+    "github",
+    "profile",
+    "professional-presence"
+  ],
+  "story_points": null,
+  "sprint": null,
+  "due_date": null,
+  "links": [],
+  "comments": [
+    {
+      "author": "jeff@devco",
+      "body": "Done. Jeff privatized 14 repos (17→3 public: reese, bax, thedarknavy). Removed Trua references from bio. Profile now decoupled from day job.",
+      "at": "2026-02-02T10:59:47Z"
+    }
+  ],
+  "created_at": "2026-02-02T10:21:31Z",
+  "updated_at": "2026-02-02T10:59:47Z"
+}

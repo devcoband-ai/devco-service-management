@@ -2,11 +2,13 @@ class FileManager
   DATA_DIR = Rails.root.join("data")
   PROJECTS_DIR = DATA_DIR.join("projects")
   ISSUES_DIR = DATA_DIR.join("issues")
+  ARCHIVE_ISSUES_DIR = DATA_DIR.join("archive", "issues")
+  DELETED_ISSUES_DIR = DATA_DIR.join("deleted", "issues")
   BOARDS_DIR = DATA_DIR.join("boards")
 
   class << self
     def ensure_directories!
-      [PROJECTS_DIR, ISSUES_DIR, BOARDS_DIR].each { |d| FileUtils.mkdir_p(d) }
+      [PROJECTS_DIR, ISSUES_DIR, ARCHIVE_ISSUES_DIR, DELETED_ISSUES_DIR, BOARDS_DIR].each { |d| FileUtils.mkdir_p(d) }
     end
 
     # --- Project files ---
@@ -59,6 +61,65 @@ class FileManager
 
     def issues_for_project(project_key)
       all_issue_files.select { |i| i["project"] == project_key }
+    end
+
+    # --- Archive / Delete / Recover ---
+
+    def archive_issue(tracking_id)
+      ensure_directories!
+      source = ISSUES_DIR.join("#{tracking_id}.json")
+      dest = ARCHIVE_ISSUES_DIR.join("#{tracking_id}.json")
+      return false unless source.exist?
+
+      FileUtils.mv(source, dest)
+      true
+    end
+
+    def delete_issue(tracking_id)
+      ensure_directories!
+      dest = DELETED_ISSUES_DIR.join("#{tracking_id}.json")
+
+      # Could be in active or archive directory
+      source = ISSUES_DIR.join("#{tracking_id}.json")
+      source = ARCHIVE_ISSUES_DIR.join("#{tracking_id}.json") unless source.exist?
+      return false unless source.exist?
+
+      FileUtils.mv(source, dest)
+      true
+    end
+
+    def recover_issue(tracking_id)
+      ensure_directories!
+      source = DELETED_ISSUES_DIR.join("#{tracking_id}.json")
+      dest = ISSUES_DIR.join("#{tracking_id}.json")
+      return false unless source.exist?
+
+      FileUtils.mv(source, dest)
+      true
+    end
+
+    def read_archived_issue(tracking_id)
+      path = ARCHIVE_ISSUES_DIR.join("#{tracking_id}.json")
+      return nil unless path.exist?
+      read_json(path)
+    end
+
+    def read_deleted_issue(tracking_id)
+      path = DELETED_ISSUES_DIR.join("#{tracking_id}.json")
+      return nil unless path.exist?
+      read_json(path)
+    end
+
+    def read_issue_any(tracking_id)
+      read_issue(tracking_id) || read_archived_issue(tracking_id) || read_deleted_issue(tracking_id)
+    end
+
+    def all_archived_issue_files
+      Dir.glob(ARCHIVE_ISSUES_DIR.join("*.json")).map { |f| read_json(f) }
+    end
+
+    def all_deleted_issue_files
+      Dir.glob(DELETED_ISSUES_DIR.join("*.json")).map { |f| read_json(f) }
     end
 
     # --- Board files ---

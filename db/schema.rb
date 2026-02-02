@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_01_235218) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_02_142027) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -50,6 +50,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_01_235218) do
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.index ["api_token"], name: "index_api_clients_on_api_token", unique: true
+  end
+
+  create_table "architectural_decision_records", force: :cascade do |t|
+    t.text "consequences"
+    t.text "context_description"
+    t.datetime "created_at", null: false
+    t.text "decision"
+    t.bigint "merge_conflict_id"
+    t.bigint "merge_session_id", null: false
+    t.integer "status", default: 0, null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["merge_conflict_id"], name: "index_architectural_decision_records_on_merge_conflict_id"
+    t.index ["merge_session_id"], name: "index_architectural_decision_records_on_merge_session_id"
   end
 
   create_table "articles", force: :cascade do |t|
@@ -97,6 +111,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_01_235218) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "cross_cutting_concerns", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_cross_cutting_concerns_on_name", unique: true
+  end
+
   create_table "decision_logs", force: :cascade do |t|
     t.text "consequences"
     t.text "context"
@@ -117,6 +139,37 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_01_235218) do
     t.text "notes"
     t.integer "score"
     t.datetime "updated_at", null: false
+  end
+
+  create_table "export_packages", force: :cascade do |t|
+    t.string "checksum"
+    t.string "content_type", null: false
+    t.datetime "created_at", null: false
+    t.string "created_by"
+    t.text "description"
+    t.integer "download_count", default: 0, null: false
+    t.datetime "expires_at"
+    t.string "file_path"
+    t.bigint "file_size"
+    t.string "format", null: false
+    t.string "name", null: false
+    t.bigint "source_id"
+    t.string "source_type"
+    t.datetime "updated_at", null: false
+    t.index ["content_type"], name: "index_export_packages_on_content_type"
+    t.index ["created_at"], name: "index_export_packages_on_created_at"
+    t.index ["source_type", "source_id"], name: "index_export_packages_on_source_type_and_source_id"
+  end
+
+  create_table "export_templates", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.string "content_type", null: false
+    t.datetime "created_at", null: false
+    t.string "format", null: false
+    t.string "name", null: false
+    t.text "template_body"
+    t.datetime "updated_at", null: false
+    t.index ["content_type", "format"], name: "index_export_templates_on_content_type_and_format"
   end
 
   create_table "feature_flags", force: :cascade do |t|
@@ -235,6 +288,44 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_01_235218) do
     t.index ["slug"], name: "index_llm_providers_on_slug", unique: true
   end
 
+  create_table "merge_conflicts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "cross_cutting_concern_id", null: false
+    t.datetime "decided_at"
+    t.string "decided_by"
+    t.text "description"
+    t.bigint "merge_session_id", null: false
+    t.bigint "pattern_a_id", null: false
+    t.bigint "pattern_b_id", null: false
+    t.text "resolution"
+    t.integer "resolution_type"
+    t.datetime "updated_at", null: false
+    t.index ["cross_cutting_concern_id"], name: "index_merge_conflicts_on_cross_cutting_concern_id"
+    t.index ["merge_session_id"], name: "index_merge_conflicts_on_merge_session_id"
+    t.index ["pattern_a_id"], name: "index_merge_conflicts_on_pattern_a_id"
+    t.index ["pattern_b_id"], name: "index_merge_conflicts_on_pattern_b_id"
+  end
+
+  create_table "merge_selections", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "merge_session_id", null: false
+    t.bigint "pattern_id", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["merge_session_id", "pattern_id"], name: "index_merge_selections_on_merge_session_id_and_pattern_id", unique: true
+    t.index ["merge_session_id"], name: "index_merge_selections_on_merge_session_id"
+    t.index ["pattern_id"], name: "index_merge_selections_on_pattern_id"
+  end
+
+  create_table "merge_sessions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "generated_conops"
+    t.string "name", null: false
+    t.integer "status", default: 0, null: false
+    t.text "target_system"
+    t.datetime "updated_at", null: false
+  end
+
   create_table "milestones", force: :cascade do |t|
     t.datetime "completed_at"
     t.datetime "created_at", null: false
@@ -244,22 +335,91 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_01_235218) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "pattern_assumptions", force: :cascade do |t|
+    t.jsonb "alternatives", default: []
+    t.text "assumption", null: false
+    t.datetime "created_at", null: false
+    t.bigint "cross_cutting_concern_id", null: false
+    t.integer "flexibility", default: 0, null: false
+    t.bigint "pattern_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["cross_cutting_concern_id"], name: "index_pattern_assumptions_on_cross_cutting_concern_id"
+    t.index ["pattern_id"], name: "index_pattern_assumptions_on_pattern_id"
+  end
+
+  create_table "pattern_dependencies", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "dependency_type", default: 0, null: false
+    t.bigint "depends_on_pattern_id", null: false
+    t.text "notes"
+    t.bigint "pattern_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["depends_on_pattern_id"], name: "index_pattern_dependencies_on_depends_on_pattern_id"
+    t.index ["pattern_id", "depends_on_pattern_id"], name: "idx_pattern_deps_unique", unique: true
+    t.index ["pattern_id"], name: "index_pattern_dependencies_on_pattern_id"
+  end
+
+  create_table "pattern_features", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.bigint "pattern_id", null: false
+    t.boolean "required", default: true
+    t.integer "sort_order", default: 0
+    t.datetime "updated_at", null: false
+    t.index ["pattern_id"], name: "index_pattern_features_on_pattern_id"
+  end
+
+  create_table "pattern_models", force: :cascade do |t|
+    t.jsonb "attributes_schema", default: []
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.text "notes"
+    t.bigint "pattern_id", null: false
+    t.jsonb "relationships", default: []
+    t.datetime "updated_at", null: false
+    t.index ["pattern_id"], name: "index_pattern_models_on_pattern_id"
+  end
+
+  create_table "pattern_use_cases", force: :cascade do |t|
+    t.string "actor", null: false
+    t.datetime "created_at", null: false
+    t.text "flow"
+    t.bigint "pattern_id", null: false
+    t.integer "sort_order", default: 0
+    t.string "title", null: false
+    t.text "trigger"
+    t.datetime "updated_at", null: false
+    t.index ["pattern_id"], name: "index_pattern_use_cases_on_pattern_id"
+  end
+
   create_table "patterns", force: :cascade do |t|
     t.string "also_known_as"
     t.bigint "article_id"
+    t.integer "category", default: 0
+    t.text "conops_narrative"
     t.text "consequences"
     t.text "context"
     t.datetime "created_at", null: false
+    t.string "harvested_from"
+    t.integer "maturity", default: 0
     t.text "mechanics_markdown"
     t.string "name"
     t.integer "number"
     t.string "one_liner"
     t.text "problem"
     t.string "related_patterns"
+    t.string "slug"
     t.text "solution"
+    t.string "source"
+    t.text "summary"
     t.text "tags"
     t.datetime "updated_at", null: false
+    t.string "version", default: "1.0.0"
     t.index ["article_id"], name: "index_patterns_on_article_id"
+    t.index ["category"], name: "index_patterns_on_category"
+    t.index ["maturity"], name: "index_patterns_on_maturity"
+    t.index ["slug"], name: "index_patterns_on_slug", unique: true, where: "(slug IS NOT NULL)"
   end
 
   create_table "permissions", force: :cascade do |t|
@@ -344,6 +504,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_01_235218) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "share_links", force: :cascade do |t|
+    t.integer "access_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.string "created_by"
+    t.datetime "expires_at"
+    t.bigint "export_package_id", null: false
+    t.integer "max_accesses"
+    t.string "password_digest"
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.index ["export_package_id"], name: "index_share_links_on_export_package_id"
+    t.index ["token"], name: "index_share_links_on_token", unique: true
+  end
+
   create_table "sm_boards", force: :cascade do |t|
     t.jsonb "columns", default: []
     t.datetime "created_at", null: false
@@ -374,8 +548,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_01_235218) do
   end
 
   create_table "sm_issues", force: :cascade do |t|
+    t.datetime "archived_at"
     t.bigint "assignee_id"
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description"
     t.date "due_date"
     t.string "file_path"
@@ -497,6 +673,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_01_235218) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "architectural_decision_records", "merge_conflicts"
+  add_foreign_key "architectural_decision_records", "merge_sessions"
   add_foreign_key "articles", "voices"
   add_foreign_key "intel_feeds", "sentinels"
   add_foreign_key "intel_items", "intel_feeds"
@@ -505,10 +683,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_01_235218) do
   add_foreign_key "llm_assignments", "users", column: "assigned_by_id"
   add_foreign_key "llm_models", "llm_providers"
   add_foreign_key "llm_models", "users", column: "certified_by_id"
+  add_foreign_key "merge_conflicts", "cross_cutting_concerns"
+  add_foreign_key "merge_conflicts", "merge_sessions"
+  add_foreign_key "merge_conflicts", "patterns", column: "pattern_a_id"
+  add_foreign_key "merge_conflicts", "patterns", column: "pattern_b_id"
+  add_foreign_key "merge_selections", "merge_sessions"
+  add_foreign_key "merge_selections", "patterns"
+  add_foreign_key "pattern_assumptions", "cross_cutting_concerns"
+  add_foreign_key "pattern_assumptions", "patterns"
+  add_foreign_key "pattern_dependencies", "patterns"
+  add_foreign_key "pattern_dependencies", "patterns", column: "depends_on_pattern_id"
+  add_foreign_key "pattern_features", "patterns"
+  add_foreign_key "pattern_models", "patterns"
+  add_foreign_key "pattern_use_cases", "patterns"
   add_foreign_key "patterns", "articles"
   add_foreign_key "role_permissions", "permissions"
   add_foreign_key "role_permissions", "roles"
   add_foreign_key "sentinel_runs", "sentinels"
+  add_foreign_key "share_links", "export_packages"
   add_foreign_key "sm_boards", "sm_projects", column: "project_id"
   add_foreign_key "sm_comments", "sm_issues", column: "issue_id"
   add_foreign_key "sm_comments", "users", column: "author_id"

@@ -1,0 +1,23 @@
+{
+  "tracking_id": "BOOK-1",
+  "project": "BOOK",
+  "type": "epic",
+  "title": "Book publishing and distribution plan",
+  "description": "19 chapters written, EPUBs generated. Need publishing strategy: Amazon KDP? Self-hosted? Both? Cover refinement, metadata, ISBN, pricing.",
+  "status": "backlog",
+  "priority": "medium",
+  "assignee": null,
+  "reporter": "jeff@devco",
+  "labels": [
+    "publishing",
+    "distribution",
+    "kindle"
+  ],
+  "story_points": null,
+  "sprint": null,
+  "due_date": null,
+  "links": [],
+  "comments": [],
+  "created_at": "2026-02-02T10:21:31Z",
+  "updated_at": "2026-02-02T10:21:31Z"
+}

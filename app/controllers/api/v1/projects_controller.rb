@@ -1,11 +1,55 @@
 module Api
   module V1
     class ProjectsController < BaseController
-      before_action :find_project, only: [:show, :update, :destroy]
+      before_action :find_project, only: [:show, :update, :destroy, :archive]
 
       def index
         projects = SmProject.includes(:lead).order(:key)
+        unless params[:include_archived] == "true"
+          projects = projects.where.not(status: "archived")
+        end
         render json: projects.map { |p| project_json(p) }
+      end
+
+      def archive
+        now = Time.current
+        issues = @project.issues.where.not(status: %w[archived deleted])
+
+        archived_count = 0
+        issues.find_each do |issue|
+          old_status = issue.status
+          file_data = FileManager.read_issue_any(issue.tracking_id)
+          if file_data
+            file_data["status"] = "archived"
+            file_data["updated_at"] = now.iso8601
+            unless FileManager::ISSUES_DIR.join("#{issue.tracking_id}.json").exist?
+              FileManager.write_issue(file_data.deep_symbolize_keys)
+            end
+          end
+
+          FileManager.archive_issue(issue.tracking_id)
+          issue.update!(status: "archived", archived_at: now)
+
+          SmTransition.create!(
+            issue: issue,
+            from_status: old_status,
+            to_status: "archived",
+            transitioned_by: current_user,
+            transitioned_at: now
+          )
+          archived_count += 1
+        end
+
+        # Archive project itself
+        project_file = FileManager.read_project(@project.key) || {}
+        project_file["status"] = "archived"
+        project_file["updated_at"] = now.iso8601
+        FileManager.write_project(project_file.symbolize_keys)
+        @project.update!(status: "archived")
+
+        render json: { message: "Project #{@project.key} archived", issues_archived: archived_count }
+      rescue => e
+        render_error(e.message)
       end
 
       def show

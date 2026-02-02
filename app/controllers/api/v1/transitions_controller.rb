@@ -15,18 +15,54 @@ module Api
           return render_error("Issue is already in #{new_status}")
         end
 
+        if old_status == "deleted"
+          return render_error("Cannot transition a deleted issue. Use the recover endpoint instead.")
+        end
+
         now = Time.current
 
         # Update file first
-        file_data = FileManager.read_issue(issue.tracking_id)
+        file_data = FileManager.read_issue_any(issue.tracking_id)
         if file_data
           file_data["status"] = new_status
           file_data["updated_at"] = now.iso8601
-          FileManager.write_issue(file_data.deep_symbolize_keys)
         end
 
-        # Update DB
-        issue.update!(status: new_status)
+        # Handle file moves for archive/delete transitions
+        if new_status == "archived"
+          if file_data
+            # Write updated content to archive location
+            FileManager.write_issue(file_data.deep_symbolize_keys) unless FileManager.read_issue(issue.tracking_id)
+          end
+          FileManager.archive_issue(issue.tracking_id)
+          issue.update!(status: new_status, archived_at: now)
+        elsif new_status == "deleted"
+          if file_data
+            # Ensure file is in a known location before moving
+            source_path = FileManager::ISSUES_DIR.join("#{issue.tracking_id}.json")
+            archive_path = FileManager::ARCHIVE_ISSUES_DIR.join("#{issue.tracking_id}.json")
+            unless source_path.exist? || archive_path.exist?
+              FileManager.write_issue(file_data.deep_symbolize_keys)
+            end
+          end
+          FileManager.delete_issue(issue.tracking_id)
+          issue.update!(status: new_status, deleted_at: now)
+        else
+          # Normal transition — if coming from archived, move file back
+          if old_status == "archived"
+            FileManager.recover_issue(issue.tracking_id) if FileManager::ARCHIVE_ISSUES_DIR.join("#{issue.tracking_id}.json").exist?
+            # Write to active dir if recovery moved it, update content
+            if file_data
+              FileManager.write_issue(file_data.deep_symbolize_keys)
+            end
+            issue.update!(status: new_status, archived_at: nil)
+          else
+            if file_data
+              FileManager.write_issue(file_data.deep_symbolize_keys)
+            end
+            issue.update!(status: new_status)
+          end
+        end
 
         # Record transition
         SmTransition.create!(

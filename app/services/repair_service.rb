@@ -21,15 +21,27 @@ class RepairService
       stats[:projects] += 1
     end
 
-    # Rebuild issues (two passes: create issues, then resolve links)
+    # Rebuild issues from all three directories (active, archived, deleted)
     issues_data = FileManager.all_issue_files.compact
-    issues_data.each do |data|
+    archived_data = FileManager.all_archived_issue_files.compact.map do |data|
+      data["status"] = "archived" unless data["status"] == "archived"
+      data["_source"] = "archived"
+      data
+    end
+    deleted_data = FileManager.all_deleted_issue_files.compact.map do |data|
+      data["status"] = "deleted" unless data["status"] == "deleted"
+      data["_source"] = "deleted"
+      data
+    end
+
+    all_issues = issues_data + archived_data + deleted_data
+    all_issues.each do |data|
       sync_issue_from_file(data, skip_links: true)
       stats[:issues] += 1
     end
 
     # Second pass: resolve links
-    issues_data.each do |data|
+    all_issues.each do |data|
       count = sync_issue_links(data)
       stats[:links] += count
     end
@@ -77,10 +89,26 @@ class RepairService
       story_points: data["story_points"],
       sprint: data["sprint"],
       due_date: data["due_date"],
-      file_path: FileManager::ISSUES_DIR.join("#{data['tracking_id']}.json").to_s
+      file_path: case data["_source"]
+                when "archived" then FileManager::ARCHIVE_ISSUES_DIR.join("#{data['tracking_id']}.json").to_s
+                when "deleted" then FileManager::DELETED_ISSUES_DIR.join("#{data['tracking_id']}.json").to_s
+                else FileManager::ISSUES_DIR.join("#{data['tracking_id']}.json").to_s
+                end
     )
     issue.created_at = data["created_at"] if data["created_at"]
     issue.updated_at = data["updated_at"] if data["updated_at"]
+
+    # Set timestamps based on source directory
+    if data["_source"] == "archived"
+      issue.archived_at ||= issue.updated_at || Time.current
+      issue.deleted_at = nil
+    elsif data["_source"] == "deleted"
+      issue.deleted_at ||= issue.updated_at || Time.current
+    else
+      issue.archived_at = nil
+      issue.deleted_at = nil
+    end
+
     issue.save!
 
     # Sync comments

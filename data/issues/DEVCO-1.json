@@ -1,0 +1,23 @@
+{
+  "tracking_id": "DEVCO-1",
+  "project": "DEVCO",
+  "type": "spike",
+  "title": "Resilience architecture: write-through files + DB",
+  "description": "ConOps question from 1/31: bake resilience into the platform. Layered continuity — files as durable store, DB as fast store, write-through to both. Jeff said ask me tomorrow.",
+  "status": "backlog",
+  "priority": "medium",
+  "assignee": null,
+  "reporter": "jeff@devco",
+  "labels": [
+    "architecture",
+    "conops",
+    "resilience"
+  ],
+  "story_points": null,
+  "sprint": null,
+  "due_date": null,
+  "links": [],
+  "comments": [],
+  "created_at": "2026-02-02T10:21:21Z",
+  "updated_at": "2026-02-02T14:24:04Z"
+}

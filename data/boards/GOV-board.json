@@ -1,0 +1,33 @@
+{
+  "project": "GOV",
+  "name": "Governance & Security Board",
+  "columns": [
+    {
+      "name": "Backlog",
+      "status_mapping": "backlog",
+      "wip_limit": null
+    },
+    {
+      "name": "To Do",
+      "status_mapping": "todo",
+      "wip_limit": null
+    },
+    {
+      "name": "In Progress",
+      "status_mapping": "in_progress",
+      "wip_limit": 5
+    },
+    {
+      "name": "In Review",
+      "status_mapping": "in_review",
+      "wip_limit": 3
+    },
+    {
+      "name": "Done",
+      "status_mapping": "done",
+      "wip_limit": null
+    }
+  ],
+  "created_at": "2026-02-02T10:21:04Z",
+  "updated_at": "2026-02-02T10:21:04Z"
+}

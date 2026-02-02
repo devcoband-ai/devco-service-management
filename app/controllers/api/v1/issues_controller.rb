@@ -6,6 +6,15 @@ module Api
 
       def index
         issues = @project.issues.includes(:assignee, :reporter, :project)
+
+        # Filter archived and deleted by default
+        unless params[:include_deleted] == "true"
+          issues = issues.where.not(status: "deleted")
+        end
+        unless params[:include_archived] == "true"
+          issues = issues.where.not(status: "archived")
+        end
+
         issues = issues.by_status(params[:status]) if params[:status].present?
         issues = issues.where(issue_type: params[:type]) if params[:type].present?
         issues = issues.order(:tracking_id)
@@ -90,22 +99,193 @@ module Api
 
       def destroy
         tracking_id = @issue.tracking_id
+        now = Time.current
+        old_status = @issue.status
 
-        # Remove references from other files
-        IntegrityChecker.remove_references_to(tracking_id)
+        # Soft delete: move file to deleted directory
+        file_data = FileManager.read_issue_any(tracking_id)
+        if file_data
+          file_data["status"] = "deleted"
+          file_data["updated_at"] = now.iso8601
+          # Ensure file exists in a movable location
+          source = FileManager::ISSUES_DIR.join("#{tracking_id}.json")
+          archive_source = FileManager::ARCHIVE_ISSUES_DIR.join("#{tracking_id}.json")
+          unless source.exist? || archive_source.exist?
+            FileManager.write_issue(file_data.deep_symbolize_keys)
+          end
+        end
 
-        # Delete file
-        FileManager.delete_issue_file(tracking_id)
+        FileManager.delete_issue(tracking_id)
 
-        # Delete from DB
-        @issue.destroy!
+        # Update DB (soft delete)
+        @issue.update!(status: "deleted", deleted_at: now)
 
-        render json: { message: "Issue #{tracking_id} deleted" }
+        # Record transition
+        SmTransition.create!(
+          issue: @issue,
+          from_status: old_status,
+          to_status: "deleted",
+          transitioned_by: current_user,
+          transitioned_at: now
+        )
+
+        render json: { message: "Issue #{tracking_id} soft-deleted", deleted_at: now }
       rescue => e
         render_error(e.message)
       end
 
+      def recover
+        issue = SmIssue.find_by!(tracking_id: params[:tracking_id] || params[:issue_tracking_id])
+
+        unless issue.status == "deleted"
+          return render_error("Issue is not deleted, cannot recover")
+        end
+
+        now = Time.current
+
+        # Read file from deleted dir and update status
+        file_data = FileManager.read_deleted_issue(issue.tracking_id)
+        if file_data
+          file_data["status"] = "backlog"
+          file_data["updated_at"] = now.iso8601
+        end
+
+        # Move file back to active
+        FileManager.recover_issue(issue.tracking_id)
+
+        # Write updated content
+        if file_data
+          FileManager.write_issue(file_data.deep_symbolize_keys)
+        end
+
+        # Update DB
+        issue.update!(status: "backlog", deleted_at: nil, archived_at: nil)
+
+        # Record transition
+        SmTransition.create!(
+          issue: issue,
+          from_status: "deleted",
+          to_status: "backlog",
+          transitioned_by: current_user,
+          transitioned_at: now
+        )
+
+        render json: { message: "Issue #{issue.tracking_id} recovered to backlog", tracking_id: issue.tracking_id }
+      rescue ActiveRecord::RecordNotFound
+        render_error("Issue not found", status: :not_found)
+      rescue => e
+        render_error(e.message)
+      end
+
+      def bulk_archive
+        results = bulk_transition(params[:tracking_ids], "archived")
+        render json: results
+      end
+
+      def bulk_delete
+        results = bulk_transition(params[:tracking_ids], "deleted")
+        render json: results
+      end
+
+      def bulk_recover
+        tracking_ids = params[:tracking_ids] || []
+        results = { succeeded: [], failed: [] }
+
+        tracking_ids.each do |tid|
+          issue = SmIssue.find_by(tracking_id: tid)
+          unless issue&.status == "deleted"
+            results[:failed] << { tracking_id: tid, error: "Not found or not deleted" }
+            next
+          end
+
+          now = Time.current
+          file_data = FileManager.read_deleted_issue(tid)
+          if file_data
+            file_data["status"] = "backlog"
+            file_data["updated_at"] = now.iso8601
+          end
+
+          FileManager.recover_issue(tid)
+          FileManager.write_issue(file_data.deep_symbolize_keys) if file_data
+
+          issue.update!(status: "backlog", deleted_at: nil, archived_at: nil)
+          SmTransition.create!(
+            issue: issue,
+            from_status: "deleted",
+            to_status: "backlog",
+            transitioned_by: current_user,
+            transitioned_at: now
+          )
+          results[:succeeded] << tid
+        rescue => e
+          results[:failed] << { tracking_id: tid, error: e.message }
+        end
+
+        render json: results
+      end
+
       private
+
+      def bulk_transition(tracking_ids, target_status)
+        tracking_ids ||= []
+        results = { succeeded: [], failed: [] }
+
+        tracking_ids.each do |tid|
+          issue = SmIssue.find_by(tracking_id: tid)
+          unless issue
+            results[:failed] << { tracking_id: tid, error: "Not found" }
+            next
+          end
+
+          if issue.status == target_status
+            results[:failed] << { tracking_id: tid, error: "Already #{target_status}" }
+            next
+          end
+
+          if issue.status == "deleted" && target_status != "deleted"
+            results[:failed] << { tracking_id: tid, error: "Cannot transition deleted issue" }
+            next
+          end
+
+          now = Time.current
+          old_status = issue.status
+          file_data = FileManager.read_issue_any(tid)
+          if file_data
+            file_data["status"] = target_status
+            file_data["updated_at"] = now.iso8601
+          end
+
+          if target_status == "archived"
+            # Ensure file is in active dir for archiving
+            unless FileManager::ISSUES_DIR.join("#{tid}.json").exist?
+              FileManager.write_issue(file_data.deep_symbolize_keys) if file_data
+            end
+            FileManager.archive_issue(tid)
+            issue.update!(status: "archived", archived_at: now)
+          elsif target_status == "deleted"
+            source = FileManager::ISSUES_DIR.join("#{tid}.json")
+            archive_source = FileManager::ARCHIVE_ISSUES_DIR.join("#{tid}.json")
+            unless source.exist? || archive_source.exist?
+              FileManager.write_issue(file_data.deep_symbolize_keys) if file_data
+            end
+            FileManager.delete_issue(tid)
+            issue.update!(status: "deleted", deleted_at: now)
+          end
+
+          SmTransition.create!(
+            issue: issue,
+            from_status: old_status,
+            to_status: target_status,
+            transitioned_by: current_user,
+            transitioned_at: now
+          )
+          results[:succeeded] << tid
+        rescue => e
+          results[:failed] << { tracking_id: tid, error: e.message }
+        end
+
+        results
+      end
 
       def find_project
         @project = SmProject.find_by!(key: params[:project_key]&.upcase || params[:project_key])
@@ -135,6 +315,8 @@ module Api
           story_points: issue.story_points,
           sprint: issue.sprint,
           due_date: issue.due_date,
+          archived_at: issue.archived_at,
+          deleted_at: issue.deleted_at,
           created_at: issue.created_at,
           updated_at: issue.updated_at
         }

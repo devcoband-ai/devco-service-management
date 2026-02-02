@@ -1,0 +1,23 @@
+{
+  "tracking_id": "DEVCO-3",
+  "project": "DEVCO",
+  "type": "epic",
+  "title": "Service Management app polish and completion",
+  "description": "Scaffold built 2/1. Needs: file-watcher sync wiring, UI polish, drag-and-drop refinement, agent integration for reading/writing JSON files directly.",
+  "status": "backlog",
+  "priority": "medium",
+  "assignee": null,
+  "reporter": "jeff@devco",
+  "labels": [
+    "service-management",
+    "kanban",
+    "polish"
+  ],
+  "story_points": null,
+  "sprint": null,
+  "due_date": null,
+  "links": [],
+  "comments": [],
+  "created_at": "2026-02-02T10:21:21Z",
+  "updated_at": "2026-02-02T14:23:49Z"
+}

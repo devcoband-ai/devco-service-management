@@ -8,14 +8,21 @@
   "priority": "medium",
   "assignee": null,
   "reporter": null,
-  "labels": ["spike", "ob3", "research"],
+  "labels": [
+    "spike",
+    "ob3",
+    "research"
+  ],
   "story_points": null,
   "sprint": null,
   "due_date": null,
   "links": [
-    {"type": "child", "ref": "OB3-1"}
+    {
+      "type": "child",
+      "ref": "OB3-1"
+    }
   ],
   "comments": [],
   "created_at": "2026-02-01T11:05:00-05:00",
-  "updated_at": "2026-02-01T11:05:00-05:00"
+  "updated_at": "2026-02-02T01:26:24Z"
 }
